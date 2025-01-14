@@ -108,7 +108,7 @@ booster = Booster(plugin=plugin)
 
 # Boost model, optimizer, and dataloader
 model, optimizer, _criterion, _, _ = booster.boost(model, optimizer=optimizer, criterion=_criterion)
-
+print(model)
 # Get distributed logger
 logger = get_dist_logger()
 
