@@ -13,7 +13,7 @@ from colossalai.nn.optimizer import HybridAdam
 import colossalai
 
 # Define config parameters
-NUM_EPOCHS = 3
+NUM_EPOCHS = 1
 BATCH_SIZE = 32
 LEARNING_RATE = 2.4e-5
 WEIGHT_DECAY = 0.01
@@ -83,7 +83,7 @@ class WikitextDataset(torch.utils.data.Dataset):
 
 # Prepare train dataset and dataloader
 train_dataset = WikitextDataset(tokenized_datasets["train"])
-train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True)
 #  assert self.batch_size == self.microbatch_size * self.num_microbatches
 print("Dataloader prepared")
 
@@ -103,7 +103,7 @@ optimizer_grouped_parameters = [
 optimizer = HybridAdam(optimizer_grouped_parameters, lr=lr, eps=1e-8)
 
 # Use ColossalAI's HybridParallelPlugin
-plugin = HybridParallelPlugin(tp_size=1, pp_size=8, microbatch_size=2, num_microbatches=4)
+plugin = HybridParallelPlugin(tp_size=1, pp_size=8, microbatch_size=1, num_microbatches=8)
 booster = Booster(plugin=plugin)
 
 # Boost model, optimizer, and dataloader
