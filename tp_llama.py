@@ -11,6 +11,7 @@ from colossalai.booster.plugin import HybridParallelPlugin
 from colossalai.logging import get_dist_logger
 from colossalai.nn.optimizer import HybridAdam
 import colossalai
+from colossalai.accelerator import get_accelerator
 import torch.distributed as dist
 # Define config parameters
 NUM_EPOCHS = 1
@@ -112,8 +113,8 @@ print(model)
 # Get distributed logger
 logger = get_dist_logger()
 
-def move_to_cuda(batch):
-    return {k: v.to(get_accelerator().get_current_device()) for k, v in batch.items()}
+# def move_to_cuda(batch):
+#     return {k: v.to(get_accelerator().get_current_device()) for k, v in batch.items()}
 
 # Training function
 def train_epoch(epoch: int, model: nn.Module, optimizer: Optimizer, _criterion: Callable, 
@@ -141,7 +142,7 @@ def train_epoch(epoch: int, model: nn.Module, optimizer: Optimizer, _criterion: 
             # #     loss = outputs["loss"]
             # #     pbar.set_postfix({"loss": loss.item()})
             data = next(train_dataloader_iter)
-            data = move_to_cuda(data)
+            data = data.cuda()
             outputs = model(**data)
             loss = _criterion(outputs, None)
             # Backward
