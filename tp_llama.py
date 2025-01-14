@@ -103,7 +103,7 @@ optimizer_grouped_parameters = [
 optimizer = HybridAdam(optimizer_grouped_parameters, lr=lr, eps=1e-8)
 
 # Use ColossalAI's HybridParallelPlugin
-plugin = HybridParallelPlugin(tp_size=1, pp_size=8, microbatch_size=1, num_microbatches=8)
+plugin = HybridParallelPlugin(tp_size=8, pp_size=1, microbatch_size=1, num_microbatches=8)
 booster = Booster(plugin=plugin)
 
 # Boost model, optimizer, and dataloader
@@ -112,10 +112,13 @@ print(model)
 # Get distributed logger
 logger = get_dist_logger()
 
+def move_to_cuda(batch):
+    return {k: v.to(get_accelerator().get_current_device()) for k, v in batch.items()}
+
 # Training function
 def train_epoch(epoch: int, model: nn.Module, optimizer: Optimizer, _criterion: Callable, 
                 train_dataloader: DataLoader, booster: Booster):
-    is_pp_last_stage = booster.plugin.stage_manager.is_last_stage()
+    # is_pp_last_stage = booster.plugin.stage_manager.is_last_stage()
     total_step = len(train_dataloader)
 
     model.train()
@@ -123,17 +126,26 @@ def train_epoch(epoch: int, model: nn.Module, optimizer: Optimizer, _criterion: 
     train_dataloader_iter = iter(train_dataloader)
     with tqdm(range(total_step - 2),  # Ignore the last batch to simplify pipeline handling
               desc=f"Epoch [{epoch + 1}/{NUM_EPOCHS}]",
-              disable=not is_pp_last_stage) as pbar:
+              disable=not dist.get_rank()==0
+              # disable=not is_pp_last_stage
+             ) as pbar:
         for _ in pbar:
-            # Forward pass using ColossalAI's pipeline
-            outputs = booster.execute_pipeline(train_dataloader_iter,
-                                               model,
-                                               _criterion,
-                                               optimizer,
-                                               return_loss=True)
-            # Backward and optimize
-            if is_pp_last_stage:
-                loss = outputs["loss"]
+            # # Forward pass using ColossalAI's pipeline
+            # outputs = booster.execute_pipeline(train_dataloader_iter,
+            #                                    model,
+            #                                    _criterion,
+            #                                    optimizer,
+            #                                    return_loss=True)
+            # # # Backward and optimize
+            # # if is_pp_last_stage:
+            # #     loss = outputs["loss"]
+            # #     pbar.set_postfix({"loss": loss.item()})
+            data = next(train_dataloader_iter)
+                data = move_to_cuda(data)
+                outputs = model(**data)
+                loss = _criterion(outputs, None)
+                # Backward
+                booster.backward(loss, optimizer)
                 pbar.set_postfix({"loss": loss.item()})
 
             optimizer.step()
