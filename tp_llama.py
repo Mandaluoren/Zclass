@@ -113,8 +113,8 @@ print(model)
 # Get distributed logger
 logger = get_dist_logger()
 
-# def move_to_cuda(batch):
-#     return {k: v.to(get_accelerator().get_current_device()) for k, v in batch.items()}
+def move_to_cuda(batch):
+    return {k: v.to(get_accelerator().get_current_device()) for k, v in batch.items()}
 
 # Training function
 def train_epoch(epoch: int, model: nn.Module, optimizer: Optimizer, _criterion: Callable, 
