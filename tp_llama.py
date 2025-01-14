@@ -11,7 +11,7 @@ from colossalai.booster.plugin import HybridParallelPlugin
 from colossalai.logging import get_dist_logger
 from colossalai.nn.optimizer import HybridAdam
 import colossalai
-
+import torch.distributed as dist
 # Define config parameters
 NUM_EPOCHS = 1
 BATCH_SIZE = 32
