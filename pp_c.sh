@@ -1,0 +1,1 @@
+colossalai run --nproc_per_node 4 pp_colossalai.py
