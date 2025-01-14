@@ -142,7 +142,7 @@ def train_epoch(epoch: int, model: nn.Module, optimizer: Optimizer, _criterion: 
             # #     loss = outputs["loss"]
             # #     pbar.set_postfix({"loss": loss.item()})
             data = next(train_dataloader_iter)
-            data = data.cuda()
+            data = move_to_cuda(data)
             outputs = model(**data)
             loss = _criterion(outputs, None)
             # Backward
